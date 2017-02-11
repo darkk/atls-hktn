@@ -2,6 +2,7 @@
 
 import cPickle as pickle
 import os
+import sys
 from netaddr import IPAddress
 
 def load(fname):
@@ -10,11 +11,12 @@ def load(fname):
     else:
         return None
 
-v4mask = load('24bitarray_20170130.pickle')
-asnset = load('asn_20170130.pickle')
-prbids = load('prbids_20170130.pickle')
+v4mask = load('24bitarray_20170130.pickle') # RU IPv4 int24 (bitset)
+asnset = load('asn_20170130.pickle')        # RU asn (set)
+prbids = load('prbids_20170130.pickle')     # RU prbid (set)
+geo24 = load('geo24_20170130.pickle')       # WW int24 -> lat, lon (dict)
 
 del load
 
 def ip24(s):
-    return (int(IPAddress('1.2.3.4')) >> 8)
+    return (int(IPAddress(s)) >> 8)

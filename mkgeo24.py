@@ -11,7 +11,8 @@ def main():
     for p in probes['objects']:
         if p['latitude'] is not None and p['address_v4']:
             geo24[ ip24(p['address_v4']) ] = (p['latitude'], p['longitude'])
-    pickle.dump(prbids, sys.stdout, pickle.HIGHEST_PROTOCOL)
+    print >>sys.stderr, len(geo24), 'geocoded /24'
+    pickle.dump(geo24, sys.stdout, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
     main()

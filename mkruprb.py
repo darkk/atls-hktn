@@ -17,6 +17,7 @@ def main():
                 or p['country_code'] == 'RU'
             ):
                 prbids.add(p['id'])
+    print >>sys.stderr, len(prbids), 'probes in RU with lat/lon'
     pickle.dump(prbids, sys.stdout, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':

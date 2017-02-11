@@ -29,3 +29,7 @@ geo24_20170130.pickle: 20170130.json
 
 prbids_20170130.pickle: 20170130.json
 	./mkruprb.py <$^ >$@
+
+geo24_dst_meta-20170130.txt.lz4: meta-20170130.txt.lz4
+	python -c 'from datadict import *; map(sys.stdout.write, ("\x22dst_addr\x22:\x22" + str(IPAddress(i << 8, version=4)).rsplit(".", 1)[0] + ".\n" for i in geo24.iterkeys()))' >geo24_dst_meta-20170130.prefilter
+	lz4cat <$^ | grep --fixed-strings --file geo24_dst_meta-20170130.prefilter | lz4 -5 >$@
