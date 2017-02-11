@@ -17,6 +17,8 @@ prbids = load('prbids_20170130.pickle')     # RU prbid (set)
 geo24 = load('geo24_20170130.pickle')       # WW int24 -> lat, lon (dict)
 geoprb = load('geoprb_20170130.pickle')     # WW prbid -> lat, lon (dict)
 
+SOL = 0.69 * 299792458 # m/s, https://habrahabr.ru/post/174225/
+
 del load
 
 def ip24(s):

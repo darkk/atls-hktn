@@ -41,3 +41,9 @@ geo_meta-20170130.txt.lz4: meta-20170130.txt.lz4
 geofresh_meta-20170130.txt.lz4: geo_meta-20170130.txt.lz4
 	# Jan 1 2017 00:00 UTC == 1483228800
 	lz4cat <$^ | jq -c 'select(.stop_time >= 1483228800 or .stop_time == null)' | lz4 -5 >$@
+
+pairs-20170130.txt.gz: geofresh_meta-20170130.txt.lz4
+	lz4cat <$^ | ./mkpairs.py | gzip -1 >$@
+
+download: geofresh_meta-20170130.txt.lz4
+	lz4cat <$^ | ./download.py
