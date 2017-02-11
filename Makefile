@@ -27,9 +27,17 @@ asn_20170130.pickle: country-resource-list_ru_20170130.json
 geo24_20170130.pickle: 20170130.json
 	./mkgeo24.py <$^ >$@
 
+geoprb_20170130.pickle: 20170130.json
+	./mkgeoprbid.py <$^ >$@
+
 prbids_20170130.pickle: 20170130.json
 	./mkruprb.py <$^ >$@
 
-geo24_dst_meta-20170130.txt.lz4: meta-20170130.txt.lz4
-	python -c 'from datadict import *; map(sys.stdout.write, ("\x22dst_addr\x22:\x22" + str(IPAddress(i << 8, version=4)).rsplit(".", 1)[0] + ".\n" for i in geo24.iterkeys()))' >geo24_dst_meta-20170130.prefilter
-	lz4cat <$^ | grep --fixed-strings --file geo24_dst_meta-20170130.prefilter | lz4 -5 >$@
+geo_meta-20170130.txt.lz4: meta-20170130.txt.lz4
+	python -c 'from datadict import *; map(sys.stdout.write, ("\x22dst_addr\x22:\x22" + str(IPAddress(i << 8, version=4)).rsplit(".", 1)[0] + ".\n" for i in geo24.iterkeys()))' >geo_dst_meta-20170130.prefilter
+	python -c 'from datadict import *; map(sys.stdout.write, ("\x22url\x22:\x22\\/api\\/v2\\/probes\\/{:d}\\/\x22\n".format(i) for i in geoprb.iterkeys()))' >geo_src_meta-20170130.prefilter
+	lz4cat <$^ | grep --fixed-strings --file geo_dst_meta-20170130.prefilter | grep --fixed-strings --file geo_src_meta-20170130.prefilter | lz4 -5 >$@
+
+geofresh_meta-20170130.txt.lz4: geo_meta-20170130.txt.lz4
+	# Jan 1 2017 00:00 UTC == 1483228800
+	lz4cat <$^ | jq -c 'select(.stop_time >= 1483228800 or .stop_time == null)' | lz4 -5 >$@

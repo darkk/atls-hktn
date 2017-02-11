@@ -15,6 +15,7 @@ v4mask = load('24bitarray_20170130.pickle') # RU IPv4 int24 (bitset)
 asnset = load('asn_20170130.pickle')        # RU asn (set)
 prbids = load('prbids_20170130.pickle')     # RU prbid (set)
 geo24 = load('geo24_20170130.pickle')       # WW int24 -> lat, lon (dict)
+geoprb = load('geoprb_20170130.pickle')     # WW prbid -> lat, lon (dict)
 
 del load
 
