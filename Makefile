@@ -62,3 +62,9 @@ ruler.txt.lz4:
 
 ruler.by-prbid.txt.lz4: ruler.txt.lz4
 	lz4cat <$^  | sort -k 2 --parallel=2 | lz4 -5 >$@
+
+speedy_probes.txt.lz4: ruler.by-prbid.txt.lz4
+	lz4cat <$^ | ./speedy.py | lz4 -5 >$@
+
+uniq_speedy_probes.txt: speedy_probes.txt.lz4
+	lz4cat <$^ | ./uniqspeedy.py >$@

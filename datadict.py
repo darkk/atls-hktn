@@ -3,7 +3,10 @@
 import cPickle as pickle
 import os
 import sys
-from netaddr import IPAddress
+try:
+    from netaddr import IPAddress
+except ImportError:
+    pass
 
 from haversine import haversine
 
