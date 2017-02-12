@@ -56,3 +56,9 @@ geo24_20170130.txt: geo24_20170130.pickle
 
 geoprb_20170130.txt: geoprb_20170130.pickle
 	python -c 'from datadict import *; map(sys.stdout.write, ("{:d} {:.4f} {:.4f}\n".format(prbid, ll[0], ll[1]) for prbid, ll in geoprb.iteritems()))' >$@
+
+ruler.txt.lz4:
+	PYTHONPATH=$$HOME/contrib-src/python-lz4 ./ruler.py | lz4 -5 >$@
+
+ruler.by-prbid.txt.lz4: ruler.txt.lz4
+	lz4cat <$^  | sort -k 2 --parallel=2 | lz4 -5 >$@

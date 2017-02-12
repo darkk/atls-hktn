@@ -50,49 +50,77 @@ baddst = (
     ip24('194.122.76.250'),
 )
 
+pairs = {
+    # (i24 << 24 + i24) -> count
+}
+
 def ruler(fname):
     with closing(openpipe(fname)) as fd:
+        skipped = 0
+
         for msm in fd:
-            try:
-                msm = ujson.loads(msm)
-            except Exception:
-                print >>sys.stderr, 'Bad json', fname
-                continue
+            if skipped > 5000: # what a boring file
+                return
 
             try:
-                dst_net = ip24(msm['dst_addr'])
-                srcll = geoprb[msm['prb_id']] # lat/lon
-                dstll = geo24[dst_net]
-            except KeyError:
-                continue # msm without dst_addr || geo lost after /24->latlon update
+                try:
+                    msm = ujson.loads(msm)
+                except Exception:
+                    print >>sys.stderr, 'Bad json', fname
+                    continue
 
-            distance = haversine(srcll, dstll) # km
 
-            if msm['type'] == 'ping':
-                first, rtt = float('nan'), msm['min']
-                if msm['min'] == -1:
-                    continue # That's "traceroute showing stars"
-            elif msm['type'] == 'traceroute':
-                first, rtt = float('inf'), float('inf')
-                for rhop in msm['result'][-2:]:
-                    for rres in rhop.get('result', ()):
-                        if rres.get('from') == msm['dst_addr'] and rres.get('rtt', float('inf')) < rtt:
-                            rtt = rres.get('rtt', float('inf'))
-                if isinf(rtt):
-                    continue # useless measurement
+                try:
+                    src_addr = msm['from'] if msm.get('from') else msm['src_addr']
+                    dst_net = ip24(msm['dst_addr'])
+                    pairskey = (ip24(src_addr) << 24) | dst_net
+                    srcll = geoprb[msm['prb_id']] # lat/lon
+                    dstll = geo24[dst_net]
+                except KeyError:
+                    continue # msm without dst_addr || geo lost after /24->latlon update
 
-                for rres in msm['result'][0]['result']:
-                    if rres.get('rtt', float('inf')) < first:
-                        first = rres.get('rtt', float('inf'))
-                if isinf(first):
-                    first = float('nan')
-            else:
-                raise RuntimeError('WTF?', msm['type'])
-            print msm['msm_id'], msm['prb_id'], msm['from'], srcll[0], srcll[1], msm['dst_addr'], dstll[0], dstll[1], int(distance), round(distance / SOL, 1), rtt, first
+                if pairs.get(pairskey, 0) > 20:
+                    skipped += 1
+                    continue
+
+                distance = haversine(srcll, dstll) # km
+
+                if msm['type'] == 'ping':
+                    first, rtt = float('nan'), msm['min']
+                    if msm['min'] == -1:
+                        continue # That's "traceroute showing stars"
+                elif msm['type'] == 'traceroute':
+                    first, rtt = float('inf'), float('inf')
+                    for rhop in msm['result'][-2:]:
+                        for rres in rhop.get('result', ()):
+                            if rres.get('from') == msm['dst_addr'] and rres.get('rtt', float('inf')) < rtt:
+                                rtt = rres.get('rtt', float('inf'))
+                    if isinf(rtt):
+                        continue # useless measurement
+
+                    for rres in msm['result'][0]['result']:
+                        if rres.get('rtt', float('inf')) < first:
+                            first = rres.get('rtt', float('inf'))
+                    if isinf(first):
+                        first = float('nan')
+                else:
+                    raise RuntimeError('WTF?', msm['type'])
+
+                pairs[pairskey] = pairs.get(pairskey, 0) + 1
+                skipped = 0
+                print msm['msm_id'], msm['prb_id'], src_addr, srcll[0], srcll[1], msm['dst_addr'], dstll[0], dstll[1], int(distance), round(distance / SOL, 1), rtt, first
+            except Exception as exc:
+                print >>sys.stderr, msm['msm_id'], msm, exc
+                skipped += 1
 
 def main():
-    for fname in sys.argv[1:]:
-        ruler(fname)
+    if len(sys.argv) > 1:
+        for fname in sys.argv[1:]:
+            ruler(fname)
+    else:
+        for fname in os.listdir('msm'):
+            if os.path.isfile('msm/'+fname):
+                ruler('msm/'+fname)
 
 if __name__ == '__main__':
     main()
