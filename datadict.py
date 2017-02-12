@@ -5,6 +5,8 @@ import os
 import sys
 from netaddr import IPAddress
 
+from haversine import haversine
+
 def load(fname):
     if os.path.exists(fname) and os.stat(fname).st_size > 0:
         return pickle.load(open(fname))
@@ -17,7 +19,7 @@ prbids = load('prbids_20170130.pickle')     # RU prbid (set)
 geo24 = load('geo24_20170130.pickle')       # WW int24 -> lat, lon (dict)
 geoprb = load('geoprb_20170130.pickle')     # WW prbid -> lat, lon (dict)
 
-SOL = 0.69 * 299792458 # m/s, https://habrahabr.ru/post/174225/
+SOL = 299.792458 / 2 # RTT km/ms, 0.69 factor for fiber https://habrahabr.ru/post/174225/
 
 del load
 
