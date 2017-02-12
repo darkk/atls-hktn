@@ -42,14 +42,36 @@ def openpipe(fname):
     else:
         return LZ4Pipe(fname)
 
+# badly geocoded destinations...
+baddst = (
+    # https://atlas.ripe.net/probes/27782/#!tab-network -- 194.122.76.254
+    # https://atlas.ripe.net/probes/6254/#!tab-network -- 194.122.76.250
+    # -- same /24, 350 km away -- let's filter that in mkgeo24 :-)
+    ip24('194.122.76.250'),
+)
+
 def ruler(fname):
     with closing(openpipe(fname)) as fd:
         for msm in fd:
-            msm = ujson.loads(msm)
-            srcll = geoprb[msm['prb_id']] # lat/lon
-            dstll = geo24[ip24(msm['dst_addr'])]
+            try:
+                msm = ujson.loads(msm)
+            except Exception:
+                print >>sys.stderr, 'Bad json', fname
+                continue
+
+            try:
+                dst_net = ip24(msm['dst_addr'])
+                srcll = geoprb[msm['prb_id']] # lat/lon
+                dstll = geo24[dst_net]
+            except KeyError:
+                continue # msm without dst_addr || geo lost after /24->latlon update
+
+            distance = haversine(srcll, dstll) # km
+
             if msm['type'] == 'ping':
                 first, rtt = float('nan'), msm['min']
+                if msm['min'] == -1:
+                    continue # That's "traceroute showing stars"
             elif msm['type'] == 'traceroute':
                 first, rtt = float('inf'), float('inf')
                 for rhop in msm['result'][-2:]:
@@ -66,7 +88,7 @@ def ruler(fname):
                     first = float('nan')
             else:
                 raise RuntimeError('WTF?', msm['type'])
-            print msm['msm_id'], msm['prb_id'], msm['from'], srcll[0], srcll[1], msm['dst_addr'], dstll[0], dstll[1], haversine(srcll, dstll) / SOL, rtt, first
+            print msm['msm_id'], msm['prb_id'], msm['from'], srcll[0], srcll[1], msm['dst_addr'], dstll[0], dstll[1], int(distance), round(distance / SOL, 1), rtt, first
 
 def main():
     for fname in sys.argv[1:]:

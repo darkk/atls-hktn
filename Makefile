@@ -2,6 +2,9 @@
 all:
 	:
 
+haversine.py:
+	wget -O $@ https://raw.githubusercontent.com/mapado/haversine/master/haversine/__init__.py
+
 20170130.json.bz2:
 	wget ftp://ftp.ripe.net/ripe/atlas/probes/archive/2017/01/20170130.json.bz2
 
@@ -47,3 +50,9 @@ pairs-20170130.txt.gz: geofresh_meta-20170130.txt.lz4
 
 download: geofresh_meta-20170130.txt.lz4
 	lz4cat <$^ | ./download.py
+
+geo24_20170130.txt: geo24_20170130.pickle
+	python -c 'from datadict import *; map(sys.stdout.write, ("{:d} {} {:.4f} {:.4f}\n".format(n24, IPAddress(n24<<8), ll[0], ll[1]) for n24, ll in geo24.iteritems()))' >$@
+
+geoprb_20170130.txt: geoprb_20170130.pickle
+	python -c 'from datadict import *; map(sys.stdout.write, ("{:d} {:.4f} {:.4f}\n".format(prbid, ll[0], ll[1]) for prbid, ll in geoprb.iteritems()))' >$@
